@@ -1,1 +1,1 @@
-![Cube lady](https://github.com/jackaperkins/perlinpilgrim/master/Assets/Resources/cubelady.png?raw=true)
+![Cube lady](https://github.com/jackaperkins/perlinpilgrim/tree/master/Assets/Resources/cubelady.png?raw=true)
