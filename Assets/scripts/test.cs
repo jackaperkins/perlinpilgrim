@@ -12,13 +12,25 @@ public class test : MonoBehaviour
 	Perlin perlin = new Perlin ();
 	bool once = true;
 	bool[,,] grid;
-	Vector3 playerVoxel = new Vector3 (0, 0, 0);
+	Vector3 playerVoxel = new Vector3 (-9999, 0, 0);
+
+	// debug
+	private bool debug;
+	private ArrayList debugMessages = new ArrayList();
 
 	// Use this for initialization
 	void Start ()
 	{
 	}
 
+	void addMessage (string m) {
+		if (debugMessages.Count > 10) {
+			debugMessages.RemoveAt(0);
+		}
+		debugMessages.Add (m);
+	}
+
+	// return a 3d array of data
 	bool[,,] fillGrid (Vector3 voxel)
 	{
 		float vx = voxel.x;
@@ -37,7 +49,6 @@ public class test : MonoBehaviour
 				}
 			}
 		}
-		print (cubes + " total points in grid");
 		return g;
 	}
 
@@ -91,10 +102,11 @@ public class test : MonoBehaviour
 
 		if (target) {
 			target.transform.Find ("geometry").gameObject.SetActive (true);
-			print ("target voxel already exists!");
+			print ("Reactivating voxel " + voxelName(voxel));
 			return;
 		}
 
+		print ("instantiating new voxel " + voxelName (voxel));
 		GameObject node = new GameObject (targetName);
 		node.transform.parent = root;
 
@@ -138,24 +150,23 @@ public class test : MonoBehaviour
 		geometry.transform.GetComponent<MeshFilter> ().mesh.CombineMeshes (combine);
 		geometry.transform.gameObject.active = true;
 
-		//node.isStatic = true;
-		print (cubes + " total places boxes");
-	}
-
-	Vector3 getColor (float x, float  y, float z)
-	{
-		float a = perlin.Noise (x * perlinScale, y * perlinScale, z * perlinScale);
-		float b = perlin.Noise (x * perlinScale + 100, y * perlinScale, z * perlinScale);
-		float c = perlin.Noise (x * perlinScale, y * perlinScale - 100, z * perlinScale);
-		Vector3 v = new Vector3 (a + 0.5f, b + 0.5f, c + 0.5f);
-		print (v);
-		return v;
 	}
 	
+
 	
 	// Update is called once per frame
 	void Update ()
 	{
+
+		//------- once
+		if (once) {
+			generate (new Vector3 (0, 0, 0));
+			print ("placing player at " + findSafeSpot());
+			player.position = findSafeSpot ();
+			once = false;
+		}
+
+		// main block
 		Vector3 voxel = player.position;
 		voxel /= (gridSize * 2);
 		voxel.x = Mathf.FloorToInt (voxel.x);
@@ -163,8 +174,7 @@ public class test : MonoBehaviour
 		voxel.z = Mathf.FloorToInt (voxel.z);
 
 		if (voxel != playerVoxel) {
-			print ("player changed voxel");
-			print (voxel);
+			addMessage("player changed voxel to " + voxelName(voxel));
 			playerVoxel = voxel;
 
 			// turn off all nodes
@@ -182,18 +192,26 @@ public class test : MonoBehaviour
 			}
 		}
 
-		//------- once
-		if (once) {
-			generate (new Vector3 (0, 0, 0));
-			print ("placing player");
-			player.position = findSafeSpot ();
-			once = false;
-		}
 
 		// place light
 		if (Input.GetMouseButtonDown (0)) {
 			GameObject g = (GameObject)Instantiate (light, player.position, Quaternion.identity);
 			g.transform.parent = root.Find (voxelName (playerVoxel)).transform;
+		}
+
+		if (Input.GetKeyDown (KeyCode.Tab)) {
+			debug = debug ? false : true;
+		}
+	}
+
+	void OnGUI () {
+		if (debug) {
+			string t = "debug\n";
+			for (int i = 0; i < debugMessages.Count; i++) {
+				t += (string) debugMessages[i] + "\n";
+			}
+
+			GUI.Box(new Rect(10, 10, 300, 220), t);
 		}
 	}
 
